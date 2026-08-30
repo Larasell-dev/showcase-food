@@ -1,5 +1,7 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 
+import LocaleController from '@/actions/App/Http/Controllers/LocaleController';
+import { storefrontCopy } from '@/lib/storefront-localization';
 import { home } from '@/routes';
 
 type Category = {
@@ -36,9 +38,12 @@ export default function Storefront({
     selectedCategory,
     products,
 }: StorefrontProps) {
+    const { localization } = usePage().props;
+    const text = storefrontCopy[localization.locale];
+
     return (
         <>
-            <Head title="Menu" />
+            <Head title={text.pageTitle} />
 
             <main className="min-h-screen bg-[#f7f6f2] text-[#1c211d]">
                 <header className="border-b border-[#d9d8d1] bg-[#f7f6f2]">
@@ -52,13 +57,44 @@ export default function Storefront({
                                     Köz Kebab
                                 </p>
                                 <p className="text-xs text-[#6c716d]">
-                                    Turkish street kitchen
+                                    {text.tagline}
                                 </p>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 text-sm font-medium text-[#4f5651]">
-                            <span className="hidden sm:inline">Your order</span>
+                        <div className="flex items-center gap-3 text-sm font-medium text-[#4f5651]">
+                            <label className="sr-only" htmlFor="locale">
+                                {text.language}
+                            </label>
+                            <span className="relative">
+                                <select
+                                    id="locale"
+                                    value={localization.locale}
+                                    onChange={(event) =>
+                                        router.post(
+                                            LocaleController.url(),
+                                            { locale: event.target.value },
+                                            { preserveScroll: true },
+                                        )
+                                    }
+                                    className="h-9 appearance-none rounded-md border border-[#c9c9c1] bg-white pr-7 pl-2 text-sm font-medium text-[#4f5651] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1f5c45]"
+                                >
+                                    {Object.entries(
+                                        localization.supportedLocales,
+                                    ).map(([locale, name]) => (
+                                        <option key={locale} value={locale}>
+                                            {name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <span
+                                    aria-hidden="true"
+                                    className="pointer-events-none absolute top-1/2 right-2.5 size-2 -translate-y-2/3 rotate-45 border-r border-b border-[#6c716d]"
+                                />
+                            </span>
+                            <span className="hidden sm:inline">
+                                {text.order}
+                            </span>
                             <span className="flex size-9 items-center justify-center rounded-full border border-[#c9c9c1] bg-white">
                                 0
                             </span>
@@ -70,20 +106,22 @@ export default function Storefront({
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                         <div>
                             <p className="text-sm font-semibold text-[#b9352b]">
-                                Made fresh to order
+                                {text.eyebrow}
                             </p>
                             <h1 className="mt-1 text-3xl font-semibold sm:text-4xl">
-                                Our menu
+                                {text.heading}
                             </h1>
                         </div>
                         <p className="text-sm text-[#6c716d]">
                             {products.length}{' '}
-                            {products.length === 1 ? 'item' : 'items'}
+                            {products.length === 1
+                                ? text.oneItem
+                                : text.manyItems}
                         </p>
                     </div>
 
                     <nav
-                        aria-label="Product categories"
+                        aria-label={text.categories}
                         className="mt-8 flex gap-2 overflow-x-auto pb-2"
                     >
                         <Link
@@ -91,7 +129,7 @@ export default function Storefront({
                             preserveScroll
                             className={pillClass(selectedCategory === null)}
                         >
-                            All
+                            {text.all}
                         </Link>
                         {categories.map((category) => (
                             <Link
@@ -111,7 +149,7 @@ export default function Storefront({
 
                     {products.length > 0 ? (
                         <section
-                            aria-label="Products"
+                            aria-label={text.products}
                             className="mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                         >
                             {products.map((product) => (
@@ -145,7 +183,7 @@ export default function Storefront({
                                             >
                                                 +
                                             </span>
-                                            Add to cart
+                                            {text.addToCart}
                                         </button>
                                     </div>
                                 </article>
@@ -154,10 +192,10 @@ export default function Storefront({
                     ) : (
                         <div className="mt-7 border-y border-[#d9d8d1] py-16 text-center">
                             <h2 className="text-lg font-semibold">
-                                No dishes here yet
+                                {text.emptyTitle}
                             </h2>
                             <p className="mt-2 text-sm text-[#6c716d]">
-                                Choose another category to keep browsing.
+                                {text.emptyText}
                             </p>
                         </div>
                     )}

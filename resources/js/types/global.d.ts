@@ -1,3 +1,4 @@
+import type { SupportedLocale } from '@/lib/storefront-localization';
 import type { Auth } from '@/types/auth';
 
 declare module 'react' {
@@ -12,6 +13,10 @@ declare module '@inertiajs/core' {
         sharedPageProps: {
             name: string;
             auth: Auth;
+            localization: {
+                locale: SupportedLocale;
+                supportedLocales: Record<string, string>;
+            };
             sidebarOpen: boolean;
             [key: string]: unknown;
         };

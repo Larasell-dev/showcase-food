@@ -4,18 +4,16 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 use Inertia\Inertia;
 use Inertia\Response;
 use Larasell\Larasell\Models\Category;
 use Larasell\Larasell\Models\Product;
 use Larasell\Larasell\Models\ProductImage;
 use Larasell\Larasell\Price;
-use Larasell\Larasell\Settings\CurrencySettings;
 
 class StorefrontController extends Controller
 {
-    public function __construct(private readonly CurrencySettings $currencySettings) {}
-
     public function __invoke(Request $request): Response
     {
         $categories = Category::query()
@@ -24,8 +22,6 @@ class StorefrontController extends Controller
             ->get(['id', 'slug', 'name']);
 
         $selectedCategory = $categories->firstWhere('slug', $request->string('category')->toString());
-        $currency = $this->currencySettings->enabled()[0];
-
         $products = Product::query()
             ->visible()
             ->when(
@@ -39,7 +35,7 @@ class StorefrontController extends Controller
         return Inertia::render('storefront', [
             'categories' => $categories->map->only(['id', 'slug', 'name'])->values(),
             'selectedCategory' => $selectedCategory?->slug,
-            'products' => $this->productProps($products, $currency->value),
+            'products' => $this->productProps($products),
         ]);
     }
 
@@ -56,9 +52,9 @@ class StorefrontController extends Controller
      *     fallbackCategory: string|null
      * }>
      */
-    private function productProps(Collection $products, string $currency): array
+    private function productProps(Collection $products): array
     {
-        return $products->map(function (Product $product) use ($currency): array {
+        return $products->map(function (Product $product): array {
             /** @var ProductImage|null $image */
             $image = $product->images->first();
 
@@ -67,7 +63,7 @@ class StorefrontController extends Controller
                 'slug' => $product->slug,
                 'name' => $product->name->get(),
                 'description' => $product->description?->get(),
-                'price' => Price::format($product->price, $currency),
+                'price' => Price::format($product->price, 'EUR', App::currentLocale()),
                 'imageUrl' => $image?->url(),
                 'imageAlt' => $image === null ? $product->name->get() : ($image->alt ?? $product->name->get()),
                 'fallbackCategory' => $product->categories->first()?->slug,
