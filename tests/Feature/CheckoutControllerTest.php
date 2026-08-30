@@ -5,6 +5,25 @@ use Inertia\Testing\AssertableInertia as Assert;
 use Larasell\Larasell\Enums\Visibility;
 use Larasell\Larasell\Models\Product;
 use Larasell\Larasell\Price;
+use Larasell\Stripe\Contracts\CreatesCheckoutSessions;
+use Stripe\Checkout\Session;
+
+final class FakeStripeCheckoutSessionsForStore implements CreatesCheckoutSessions
+{
+    /** @var array<string, mixed> */
+    public array $parameters = [];
+
+    public function create(array $parameters, array $options = []): Session
+    {
+        $this->parameters = $parameters;
+
+        return Session::constructFrom([
+            'id' => 'cs_test_storefront',
+            'object' => 'checkout.session',
+            'url' => 'https://checkout.stripe.test/c/pay/cs_test_storefront',
+        ]);
+    }
+}
 
 it('renders the checkout page', function () {
     $response = $this->get(route('checkout'));
@@ -60,6 +79,62 @@ it('requires delivery address fields only for delivery orders', function () {
 
     $response->assertInvalid(['street', 'postcode', 'city']);
     $this->assertDatabaseEmpty('larasell_orders');
+});
+
+it('redirects Stripe orders to hosted checkout', function () {
+    $sessions = new FakeStripeCheckoutSessionsForStore;
+    app()->instance(CreatesCheckoutSessions::class, $sessions);
+    $product = checkoutProduct();
+
+    $response = $this
+        ->withHeader('X-Inertia', 'true')
+        ->post(route('checkout.store'), [
+            'fulfillment_method' => 'pickup',
+            'name' => 'Ada Lovelace',
+            'email' => 'ada@example.com',
+            'payment_method' => 'stripe',
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1],
+            ],
+        ]);
+
+    $order = Order::query()->sole();
+
+    $response
+        ->assertConflict()
+        ->assertHeader('X-Inertia-Location', 'https://checkout.stripe.test/c/pay/cs_test_storefront');
+    expect($order->payments->first()->method)->toBe('stripe')
+        ->and($order->payments->first()->reference)->toBe('cs_test_storefront')
+        ->and($sessions->parameters['success_url'])->toContain('{CHECKOUT_SESSION_ID}')
+        ->and($sessions->parameters['cancel_url'])->toBe(route('checkout'));
+});
+
+it('resolves a Stripe success redirect to the public order confirmation', function () {
+    $sessions = new FakeStripeCheckoutSessionsForStore;
+    app()->instance(CreatesCheckoutSessions::class, $sessions);
+    $product = checkoutProduct();
+    $this->post(route('checkout.store'), [
+        'fulfillment_method' => 'pickup',
+        'name' => 'Ada Lovelace',
+        'email' => 'ada@example.com',
+        'payment_method' => 'stripe',
+        'items' => [
+            ['product_id' => $product->id, 'quantity' => 1],
+        ],
+    ]);
+    $order = Order::query()->sole();
+
+    $response = $this->get(route('checkout.stripe.success', [
+        'session_id' => 'cs_test_storefront',
+    ]));
+
+    $response->assertRedirect(route('order.confirmation', $order));
+});
+
+it('allows Stripe webhook requests through CSRF validation', function () {
+    $response = $this->post('/larasell/stripe/webhook');
+
+    $response->assertBadRequest();
 });
 
 function checkoutProduct(): Product

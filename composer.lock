@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "495c1dbaea733c2f171ee6f229263500",
+    "content-hash": "24b3989c85c81b347a3d2ab70dbf8961",
     "packages": [
         {
             "name": "brick/math",
@@ -1185,6 +1185,54 @@
                 "source": "https://github.com/Larasell-dev/larasell/tree/v1.6.0"
             },
             "time": "2026-08-30T20:09:23+00:00"
+        },
+        {
+            "name": "larasell-dev/stripe",
+            "version": "v0.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Larasell-dev/extension-stripe.git",
+                "reference": "d039c25e05b5eb6fae473b3c759ca33dbd874289"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Larasell-dev/extension-stripe/zipball/d039c25e05b5eb6fae473b3c759ca33dbd874289",
+                "reference": "d039c25e05b5eb6fae473b3c759ca33dbd874289",
+                "shasum": ""
+            },
+            "require": {
+                "larasell-dev/larasell": "^1.2",
+                "php": "^8.2",
+                "stripe/stripe-php": "^21.3"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.30",
+                "orchestra/testbench": "^11.0",
+                "pestphp/pest": "^5.1"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Larasell\\Stripe\\StripeServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Larasell\\Stripe\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Stripe payments for Larasell",
+            "support": {
+                "issues": "https://github.com/Larasell-dev/extension-stripe/issues",
+                "source": "https://github.com/Larasell-dev/extension-stripe/tree/v0.3.0"
+            },
+            "time": "2026-08-29T12:41:58+00:00"
         },
         {
             "name": "laravel/framework",
@@ -3503,6 +3551,68 @@
                 "source": "https://github.com/ramsey/uuid/tree/4.9.3"
             },
             "time": "2026-06-18T03:57:49+00:00"
+        },
+        {
+            "name": "stripe/stripe-php",
+            "version": "v21.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/stripe/stripe-php.git",
+                "reference": "fe99159b9ee0a74be3c12c0305e5338e0b9905c3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/fe99159b9ee0a74be3c12c0305e5338e0b9905c3",
+                "reference": "fe99159b9ee0a74be3c12c0305e5338e0b9905c3",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-json": "*",
+                "ext-mbstring": "*",
+                "php": ">=7.2.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "3.94.0",
+                "phpstan/phpstan": "^1.2",
+                "phpunit/phpunit": "^8.0 || ^9.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.0-dev"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "lib/version_check.php"
+                ],
+                "psr-4": {
+                    "Stripe\\": "lib/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Stripe and contributors",
+                    "homepage": "https://github.com/stripe/stripe-php/contributors"
+                }
+            ],
+            "description": "Stripe PHP Library",
+            "homepage": "https://stripe.com/",
+            "keywords": [
+                "api",
+                "payment processing",
+                "stripe"
+            ],
+            "support": {
+                "issues": "https://github.com/stripe/stripe-php/issues",
+                "source": "https://github.com/stripe/stripe-php/tree/v21.3.0"
+            },
+            "time": "2026-08-27T04:12:06+00:00"
         },
         {
             "name": "symfony/clock",

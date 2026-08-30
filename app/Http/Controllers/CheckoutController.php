@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreOrderRequest;
 use App\Models\Order;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -16,6 +16,7 @@ use Larasell\Larasell\Checkout\Checkout;
 use Larasell\Larasell\Enums\Currency;
 use Larasell\Larasell\Models\Cart;
 use Larasell\Larasell\Models\Product;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class CheckoutController extends Controller
 {
@@ -24,7 +25,7 @@ class CheckoutController extends Controller
         return Inertia::render('checkout');
     }
 
-    public function store(StoreOrderRequest $request, Checkout $checkout): RedirectResponse
+    public function store(StoreOrderRequest $request, Checkout $checkout): SymfonyResponse
     {
         $data = $request->validated();
         $cart = Cart::query()->create(['currency' => Currency::EUR]);
@@ -45,6 +46,7 @@ class CheckoutController extends Controller
                     'shipping_address' => $this->shippingAddress($data),
                 ],
                 $data['payment_method'],
+                $this->paymentOptions($data['payment_method']),
                 idempotencyKey: (string) Str::uuid(),
             );
 
@@ -57,6 +59,10 @@ class CheckoutController extends Controller
             ]);
         } finally {
             $cart->delete();
+        }
+
+        if ($result->requiresRedirect()) {
+            return Inertia::location($result->redirect());
         }
 
         return to_route('order.confirmation', $order);
@@ -85,5 +91,21 @@ class CheckoutController extends Controller
             email: $data['email'],
             phone: $data['phone'] ?? null,
         );
+    }
+
+    /** @return array<string, mixed> */
+    private function paymentOptions(string $paymentMethod): array
+    {
+        if ($paymentMethod !== 'stripe') {
+            return [];
+        }
+
+        return [
+            'success_url' => route('checkout.stripe.success', absolute: true).'?session_id={CHECKOUT_SESSION_ID}',
+            'cancel_url' => route('checkout', absolute: true),
+            'session_options' => [
+                'locale' => App::currentLocale(),
+            ],
+        ];
     }
 }

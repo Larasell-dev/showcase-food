@@ -9,6 +9,7 @@ import { home } from '@/routes';
 import { store as storeCheckout } from '@/routes/checkout';
 
 type FulfillmentMethod = 'delivery' | 'pickup';
+type PaymentMethod = 'cash' | 'stripe';
 
 const inputClassName =
     'h-11 w-full rounded-md border border-[#c9c9c1] bg-white px-3 text-sm text-[#1c211d] placeholder:text-[#929790] focus-visible:border-[#1f5c45] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#1f5c45]';
@@ -19,6 +20,7 @@ export default function Checkout() {
     const { items, itemCount, totalAmount, clearCart } = useCart();
     const [fulfillmentMethod, setFulfillmentMethod] =
         useState<FulfillmentMethod>('delivery');
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const deliveryAmount =
         fulfillmentMethod === 'delivery' &&
@@ -84,7 +86,7 @@ export default function Checkout() {
                                         postcode: formData.get('postcode'),
                                         city: formData.get('city'),
                                         notes: formData.get('notes'),
-                                        payment_method: 'cash',
+                                        payment_method: paymentMethod,
                                         items: items.map(
                                             ({ product, quantity }) => ({
                                                 product_id: product.id,
@@ -191,23 +193,22 @@ export default function Checkout() {
                             </CheckoutSection>
 
                             <CheckoutSection title={text.paymentMethod}>
-                                <label className="flex cursor-pointer items-start gap-3 rounded-md border border-[#1f5c45] bg-[#edf2ee] p-4">
-                                    <input
-                                        type="radio"
-                                        name="payment_method"
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <PaymentOption
                                         value="cash"
-                                        defaultChecked
-                                        className="mt-0.5 size-4 accent-[#1f5c45]"
+                                        title={text.cash}
+                                        description={text.cashDescription}
+                                        checked={paymentMethod === 'cash'}
+                                        onChange={setPaymentMethod}
                                     />
-                                    <span>
-                                        <span className="block text-sm font-semibold">
-                                            {text.cash}
-                                        </span>
-                                        <span className="mt-1 block text-sm leading-5 text-[#656b66]">
-                                            {text.cashDescription}
-                                        </span>
-                                    </span>
-                                </label>
+                                    <PaymentOption
+                                        value="stripe"
+                                        title={text.stripe}
+                                        description={text.stripeDescription}
+                                        checked={paymentMethod === 'stripe'}
+                                        onChange={setPaymentMethod}
+                                    />
+                                </div>
                             </CheckoutSection>
 
                             <button
@@ -356,6 +357,41 @@ function FulfillmentOption({
             <input
                 type="radio"
                 name={name}
+                value={value}
+                checked={checked}
+                onChange={() => onChange(value)}
+                className="mt-0.5 size-4 accent-[#1f5c45]"
+            />
+            <span>
+                <span className="block text-sm font-semibold">{title}</span>
+                <span className="mt-1 block text-sm leading-5 text-[#656b66]">
+                    {description}
+                </span>
+            </span>
+        </label>
+    );
+}
+
+function PaymentOption({
+    value,
+    title,
+    description,
+    checked,
+    onChange,
+}: {
+    value: PaymentMethod;
+    title: string;
+    description: string;
+    checked: boolean;
+    onChange: (value: PaymentMethod) => void;
+}) {
+    return (
+        <label
+            className={`flex cursor-pointer items-start gap-3 rounded-md border p-4 transition-colors ${checked ? 'border-[#1f5c45] bg-[#edf2ee]' : 'border-[#c9c9c1] bg-white hover:border-[#769080]'}`}
+        >
+            <input
+                type="radio"
+                name="payment_method"
                 value={value}
                 checked={checked}
                 onChange={() => onChange(value)}

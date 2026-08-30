@@ -31,7 +31,7 @@ class StoreOrderRequest extends FormRequest
             'postcode' => ['required_if:fulfillment_method,delivery', 'nullable', 'string', 'max:20'],
             'city' => ['required_if:fulfillment_method,delivery', 'nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:2000'],
-            'payment_method' => ['required', Rule::in(['cash'])],
+            'payment_method' => ['required', Rule::in(['cash', 'stripe'])],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer', 'distinct', 'exists:larasell_products,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:99'],

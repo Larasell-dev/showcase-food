@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Larasell\Larasell\Shipping\ShippingManager;
+use Larasell\Stripe\StripePaymentProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -18,7 +19,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        config(['larasell.models.order' => Order::class]);
+        config([
+            'larasell.models.order' => Order::class,
+            'larasell.payments.methods.stripe' => [
+                'driver' => 'stripe',
+                'provider' => StripePaymentProvider::class,
+                'inventory_reservation_minutes' => 30,
+            ],
+        ]);
     }
 
     /**
