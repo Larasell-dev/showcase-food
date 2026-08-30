@@ -22,7 +22,12 @@ npm-debug.log
 yarn-error.log
 /auth.json
 /.fleet
+/.agents
+/.ai
+/.codex
+/.cursor
 /.idea
 /.nova
+/.pi
 /.vscode
 /.zed
