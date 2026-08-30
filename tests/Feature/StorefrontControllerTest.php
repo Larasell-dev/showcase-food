@@ -28,6 +28,7 @@ it('renders visible products and root category filters', function () {
         ->has('products', 2)
         ->where('products.0.name', 'Chicken Wrap')
         ->where('products.0.price', Price::format(Price::of(950), 'EUR', 'en'))
+        ->where('products.0.priceAmount', 950)
         ->where('products.1.name', 'Mixed Plate')
         ->missing('products.2'));
 });

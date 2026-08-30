@@ -47,6 +47,7 @@ class StorefrontController extends Controller
      *     name: string,
      *     description: string|null,
      *     price: string,
+     *     priceAmount: int,
      *     imageUrl: string|null,
      *     imageAlt: string,
      *     fallbackCategory: string|null
@@ -64,6 +65,7 @@ class StorefrontController extends Controller
                 'name' => $product->name->get(),
                 'description' => $product->description?->get(),
                 'price' => Price::format($product->price, 'EUR', App::currentLocale()),
+                'priceAmount' => (int) $product->price->amount(),
                 'imageUrl' => $image?->url(),
                 'imageAlt' => $image === null ? $product->name->get() : ($image->alt ?? $product->name->get()),
                 'fallbackCategory' => $product->categories->first()?->slug,

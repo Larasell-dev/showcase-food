@@ -2,11 +2,14 @@
 
 namespace App\Providers;
 
+use App\Models\Order;
+use App\Shipping\FulfillmentShippingMethod;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Larasell\Larasell\Shipping\ShippingManager;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -15,7 +18,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        config(['larasell.models.order' => Order::class]);
     }
 
     /**
@@ -24,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        app(ShippingManager::class)->register(FulfillmentShippingMethod::class);
     }
 
     /**

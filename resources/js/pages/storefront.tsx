@@ -1,8 +1,13 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Dialog } from '@base-ui/react/dialog';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 
-import LocaleController from '@/actions/App/Http/Controllers/LocaleController';
+import CartProductImage from '@/components/cart-product-image';
+import StorefrontHeader from '@/components/storefront-header';
+import { useCart } from '@/lib/cart';
+import type { CartItem, CartProduct } from '@/lib/cart';
 import { storefrontCopy } from '@/lib/storefront-localization';
-import { home } from '@/routes';
+import { checkout, home } from '@/routes';
 
 type Category = {
     id: number;
@@ -10,27 +15,12 @@ type Category = {
     name: string;
 };
 
-type Product = {
-    id: number;
-    slug: string;
-    name: string;
-    description: string | null;
-    price: string;
-    imageUrl: string | null;
-    imageAlt: string;
-    fallbackCategory: string | null;
-};
+type Product = CartProduct;
 
 type StorefrontProps = {
     categories: Category[];
     selectedCategory: string | null;
     products: Product[];
-};
-
-const fallbackPositions: Record<string, string> = {
-    'doner-wraps': 'bg-left',
-    'grill-plates': 'bg-center',
-    'sides-drinks': 'bg-right',
 };
 
 export default function Storefront({
@@ -40,67 +30,24 @@ export default function Storefront({
 }: StorefrontProps) {
     const { localization } = usePage().props;
     const text = storefrontCopy[localization.locale];
+    const [cartOpen, setCartOpen] = useState(false);
+    const { items, itemCount, totalAmount, addItem, updateQuantity } =
+        useCart();
+
+    function addToCart(product: Product) {
+        addItem(product);
+        setCartOpen(true);
+    }
 
     return (
         <>
             <Head title={text.pageTitle} />
 
             <main className="min-h-screen bg-[#f7f6f2] text-[#1c211d]">
-                <header className="border-b border-[#d9d8d1] bg-[#f7f6f2]">
-                    <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-5 sm:px-8 lg:px-10">
-                        <div className="flex items-center gap-3">
-                            <span className="flex size-10 items-center justify-center rounded-full bg-[#b9352b] text-lg font-semibold text-white">
-                                K
-                            </span>
-                            <div>
-                                <p className="text-base font-semibold">
-                                    Köz Kebab
-                                </p>
-                                <p className="text-xs text-[#6c716d]">
-                                    {text.tagline}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 text-sm font-medium text-[#4f5651]">
-                            <label className="sr-only" htmlFor="locale">
-                                {text.language}
-                            </label>
-                            <span className="relative">
-                                <select
-                                    id="locale"
-                                    value={localization.locale}
-                                    onChange={(event) =>
-                                        router.post(
-                                            LocaleController.url(),
-                                            { locale: event.target.value },
-                                            { preserveScroll: true },
-                                        )
-                                    }
-                                    className="h-9 appearance-none rounded-md border border-[#c9c9c1] bg-white pr-7 pl-2 text-sm font-medium text-[#4f5651] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1f5c45]"
-                                >
-                                    {Object.entries(
-                                        localization.supportedLocales,
-                                    ).map(([locale, name]) => (
-                                        <option key={locale} value={locale}>
-                                            {name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <span
-                                    aria-hidden="true"
-                                    className="pointer-events-none absolute top-1/2 right-2.5 size-2 -translate-y-2/3 rotate-45 border-r border-b border-[#6c716d]"
-                                />
-                            </span>
-                            <span className="hidden sm:inline">
-                                {text.order}
-                            </span>
-                            <span className="flex size-9 items-center justify-center rounded-full border border-[#c9c9c1] bg-white">
-                                0
-                            </span>
-                        </div>
-                    </div>
-                </header>
+                <StorefrontHeader
+                    itemCount={itemCount}
+                    onCartOpen={() => setCartOpen(true)}
+                />
 
                 <div className="mx-auto w-full max-w-7xl px-5 py-10 sm:px-8 sm:py-14 lg:px-10">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -127,6 +74,7 @@ export default function Storefront({
                         <Link
                             href={home()}
                             preserveScroll
+                            preserveState
                             className={pillClass(selectedCategory === null)}
                         >
                             {text.all}
@@ -138,6 +86,7 @@ export default function Storefront({
                                     query: { category: category.slug },
                                 })}
                                 preserveScroll
+                                preserveState
                                 className={pillClass(
                                     selectedCategory === category.slug,
                                 )}
@@ -157,7 +106,7 @@ export default function Storefront({
                                     key={product.id}
                                     className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-[#deddd6] bg-white shadow-[0_1px_2px_rgba(28,33,29,0.06)]"
                                 >
-                                    <ProductImage product={product} />
+                                    <CartProductImage product={product} />
 
                                     <div className="flex flex-1 flex-col p-5">
                                         <div className="flex items-start justify-between gap-4">
@@ -175,6 +124,7 @@ export default function Storefront({
 
                                         <button
                                             type="button"
+                                            onClick={() => addToCart(product)}
                                             className="mt-auto flex h-11 w-full items-center justify-center gap-2 rounded-md bg-[#1f5c45] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#174936] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1f5c45]"
                                         >
                                             <span
@@ -201,30 +151,172 @@ export default function Storefront({
                     )}
                 </div>
             </main>
+
+            <CartDialog
+                open={cartOpen}
+                onOpenChange={setCartOpen}
+                items={items}
+                totalAmount={totalAmount}
+                locale={localization.locale}
+                text={text}
+                onUpdateQuantity={updateQuantity}
+            />
         </>
     );
 }
 
-function ProductImage({ product }: { product: Product }) {
-    if (product.imageUrl) {
-        return (
-            <img
-                src={product.imageUrl}
-                alt={product.imageAlt}
-                className="aspect-[4/3] w-full object-cover"
-            />
-        );
-    }
-
-    const position =
-        fallbackPositions[product.fallbackCategory ?? ''] ?? 'bg-left';
-
+function CartDialog({
+    open,
+    onOpenChange,
+    items,
+    totalAmount,
+    locale,
+    text,
+    onUpdateQuantity,
+}: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    items: CartItem[];
+    totalAmount: number;
+    locale: string;
+    text: (typeof storefrontCopy)[keyof typeof storefrontCopy];
+    onUpdateQuantity: (productId: number, quantity: number) => void;
+}) {
     return (
-        <div
-            role="img"
-            aria-label={product.imageAlt}
-            className={`aspect-[4/3] w-full bg-[url('/images/storefront/kebab-menu-fallback.webp')] bg-[length:300%_100%] bg-no-repeat ${position}`}
-        />
+        <Dialog.Root open={open} onOpenChange={onOpenChange}>
+            <Dialog.Portal>
+                <Dialog.Backdrop className="fixed inset-0 z-40 bg-[#1c211d]/45 opacity-100 transition-opacity duration-300 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
+                <Dialog.Popup className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md translate-x-0 flex-col bg-[#f7f6f2] shadow-[-12px_0_32px_rgba(28,33,29,0.18)] transition-transform duration-300 ease-out data-[ending-style]:translate-x-full data-[starting-style]:translate-x-full">
+                    <div className="flex items-start justify-between gap-6 border-b border-[#d9d8d1] px-5 py-5 sm:px-6">
+                        <div className="min-w-0">
+                            <Dialog.Title className="text-xl font-semibold text-[#1c211d]">
+                                {text.cartTitle}
+                            </Dialog.Title>
+                            <Dialog.Description className="mt-1 text-sm text-[#6c716d]">
+                                {text.cartDescription}
+                            </Dialog.Description>
+                        </div>
+                        <Dialog.Close
+                            aria-label={text.closeCart}
+                            className="flex size-10 shrink-0 items-center justify-center rounded-md text-2xl leading-none text-[#4f5651] transition-colors hover:bg-[#dfe7e1] hover:text-[#1f5c45] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1f5c45]"
+                        >
+                            <span aria-hidden="true">&times;</span>
+                        </Dialog.Close>
+                    </div>
+
+                    {items.length > 0 ? (
+                        <>
+                            <div className="flex-1 overflow-y-auto px-5 py-2 sm:px-6">
+                                {items.map(({ product, quantity }) => (
+                                    <div
+                                        key={product.id}
+                                        className="flex gap-4 border-b border-[#deddd6] py-5"
+                                    >
+                                        <div className="size-20 shrink-0 overflow-hidden rounded-md bg-[#e7e5dd]">
+                                            <CartProductImage
+                                                product={product}
+                                                compact
+                                            />
+                                        </div>
+                                        <div className="flex min-w-0 flex-1 flex-col gap-3">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <p className="min-w-0 font-semibold text-[#1c211d]">
+                                                    {product.name}
+                                                </p>
+                                                <span className="shrink-0 text-sm font-semibold text-[#b9352b]">
+                                                    {product.price}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="flex h-9 items-center rounded-md border border-[#c9c9c1] bg-white">
+                                                    <button
+                                                        type="button"
+                                                        aria-label={
+                                                            text.decreaseQuantity
+                                                        }
+                                                        onClick={() =>
+                                                            onUpdateQuantity(
+                                                                product.id,
+                                                                quantity - 1,
+                                                            )
+                                                        }
+                                                        className="flex size-9 items-center justify-center rounded-l-md text-lg text-[#4f5651] transition-colors hover:bg-[#dfe7e1] hover:text-[#1f5c45] focus-visible:outline-2 focus-visible:outline-[#1f5c45]"
+                                                    >
+                                                        <span aria-hidden="true">
+                                                            −
+                                                        </span>
+                                                    </button>
+                                                    <span className="w-8 text-center text-sm font-semibold tabular-nums">
+                                                        {quantity}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        aria-label={
+                                                            text.increaseQuantity
+                                                        }
+                                                        onClick={() =>
+                                                            onUpdateQuantity(
+                                                                product.id,
+                                                                quantity + 1,
+                                                            )
+                                                        }
+                                                        className="flex size-9 items-center justify-center rounded-r-md text-lg text-[#4f5651] transition-colors hover:bg-[#dfe7e1] hover:text-[#1f5c45] focus-visible:outline-2 focus-visible:outline-[#1f5c45]"
+                                                    >
+                                                        <span aria-hidden="true">
+                                                            +
+                                                        </span>
+                                                    </button>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        onUpdateQuantity(
+                                                            product.id,
+                                                            0,
+                                                        )
+                                                    }
+                                                    className="text-sm font-medium text-[#6c716d] underline underline-offset-4 hover:text-[#b9352b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b9352b]"
+                                                >
+                                                    {text.remove}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
+                            <p className="text-lg font-semibold text-[#1c211d]">
+                                {text.cartEmpty}
+                            </p>
+                            <p className="mt-2 max-w-xs text-sm leading-6 text-[#6c716d]">
+                                {text.cartEmptyText}
+                            </p>
+                        </div>
+                    )}
+                    <div className="flex items-end justify-between gap-4 border-t border-[#d9d8d1] bg-white px-5 py-5 sm:px-6">
+                        <Link
+                            href={checkout()}
+                            className="rounded-md bg-[#1f5c45] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#174936] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1f5c45]"
+                        >
+                            {text.checkout}
+                        </Link>
+                        <div className="text-right text-[#1c211d]">
+                            <p className="text-sm font-medium text-[#6c716d]">
+                                {text.total}
+                            </p>
+                            <p className="mt-0.5 text-lg font-semibold">
+                                {new Intl.NumberFormat(locale, {
+                                    style: 'currency',
+                                    currency: 'EUR',
+                                }).format(totalAmount / 100)}
+                            </p>
+                        </div>
+                    </div>
+                </Dialog.Popup>
+            </Dialog.Portal>
+        </Dialog.Root>
     );
 }
 
