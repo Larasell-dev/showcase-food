@@ -24,7 +24,9 @@ it('renders visible products and root category filters', function () {
         ->where('selectedCategory', null)
         ->has('categories', 2)
         ->where('categories.0.slug', 'plates')
+        ->where('categories.0.name', 'Plates')
         ->where('categories.1.slug', 'wraps')
+        ->where('categories.1.name', 'Wraps')
         ->has('products', 2)
         ->where('products.0.name', 'Chicken Wrap')
         ->where('products.0.price', Price::format(Price::of(950), 'EUR', 'en'))
@@ -46,7 +48,8 @@ it('filters products by the selected category', function () {
     $response->assertInertia(fn (Assert $page) => $page
         ->where('selectedCategory', 'plates')
         ->has('products', 1)
-        ->where('products.0.slug', 'mixed-plate'));
+        ->where('products.0.slug', 'mixed-plate')
+        ->where('products.0.fallbackCategory', 'plates'));
 });
 
 it('shows all products when the category filter is unknown', function () {

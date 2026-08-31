@@ -21,7 +21,9 @@ class StorefrontController extends Controller
             ->orderBy('name')
             ->get(['id', 'slug', 'name']);
 
-        $selectedCategory = $categories->firstWhere('slug', $request->string('category')->toString());
+        $selectedCategory = $categories->first(
+            fn (Category $category): bool => $category->slug->get() === $request->string('category')->toString(),
+        );
         $products = Product::query()
             ->visible()
             ->when(
@@ -33,8 +35,12 @@ class StorefrontController extends Controller
             ->get(['id', 'slug', 'name', 'description', 'price']);
 
         return Inertia::render('storefront', [
-            'categories' => $categories->map->only(['id', 'slug', 'name'])->values(),
-            'selectedCategory' => $selectedCategory?->slug,
+            'categories' => $categories->map(fn (Category $category): array => [
+                'id' => $category->id,
+                'slug' => $category->slug->get(),
+                'name' => $category->name->get(),
+            ])->values(),
+            'selectedCategory' => $selectedCategory?->slug->get(),
             'products' => $this->productProps($products),
         ]);
     }
@@ -61,14 +67,14 @@ class StorefrontController extends Controller
 
             return [
                 'id' => $product->id,
-                'slug' => $product->slug,
+                'slug' => $product->slug->get(),
                 'name' => $product->name->get(),
                 'description' => $product->description?->get(),
                 'price' => Price::format($product->price, 'EUR', App::currentLocale()),
                 'priceAmount' => (int) $product->price->amount(),
                 'imageUrl' => $image?->url(),
                 'imageAlt' => $image === null ? $product->name->get() : ($image->alt ?? $product->name->get()),
-                'fallbackCategory' => $product->categories->first()?->slug,
+                'fallbackCategory' => $product->categories->first()?->slug->get(),
             ];
         })->values()->all();
     }

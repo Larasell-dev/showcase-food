@@ -20,7 +20,7 @@ class OrderConfirmationController extends Controller
                 'number' => $order->number,
                 'items' => $order->items->map(fn ($item): array => [
                     'id' => $item->id,
-                    'name' => $item->product_name,
+                    'name' => $item->product_name->get(),
                     'quantity' => $item->quantity,
                     'unitPrice' => Price::format($item->unit_price, $order->currency, App::currentLocale()),
                     'total' => Price::format($item->total, $order->currency, App::currentLocale()),
